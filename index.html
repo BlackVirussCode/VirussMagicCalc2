@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="apple-touch-icon" href="icon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>iPhone Style Calculator</title>
+<link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -40,13 +40,8 @@ button {
   background-color: #000;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 12rem 1rem 2.65rem;
-}
-
-.calc_header {
-  margin-top: 10px;
-  padding: 8px;
+  justify-content: flex-end; /* прижмёт поле и кнопки к низу */
+  padding: 1rem 1rem 2.65rem;
 }
 
 .calc_header input {
@@ -98,33 +93,13 @@ button {
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-/* Убираем hover-подсветку */
-.btn:hover,
-.btn-dark-grey:hover,
-.btn-grey:hover,
-.btn-orange:hover {
-  transform: none;
-  filter: none;
-}
-
-.btn-dark-grey:active,
-.btn-grey:active {
-  transform: scale(1.05);
-  filter: brightness(1.15);
-}
-
-.btn-orange.active {
-  transform: scale(1.05);
-  filter: brightness(1.15);
-}
+.btn[data-type="operator"][value="%"] { font-size: 2.8rem; }
 
 .btn-dark-grey { background-color: #323232; }
-.btn-grey { background-color: #5e5e5e; color: #FFFFFF; }
+.btn-grey { background-color: #5e5e5e; color: #fff; }
 .btn-orange { background-color: #ff9201; }
 
-.btn[data-type="operator"][value="%"] {
-  font-size: 2.8rem;
-}
+.btn-orange.active { transform: scale(1.05); filter: brightness(1.15); }
 </style>
 </head>
 <body>
@@ -152,7 +127,7 @@ button {
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="8">8</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="9">9</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="*">
-        <img src="umnoz.svg" alt="multiply">
+        <img src="umnoz.svg" alt="umnoz">
       </button>
     </div>
 
@@ -177,12 +152,12 @@ button {
     <!-- Нижний ряд -->
     <div class="btn_group">
       <button type="button" class="btn btn-dark-grey btn-icon" data-type="operator" value="invert">
-        <img src="plusminus.svg" alt="invert">
+        <img src="plusminus.svg" alt="plusminus">
       </button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="0">0</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value=".">,</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="=">
-        <img src="ravno.svg" alt="equals">
+        <img src="ravno.svg" alt="ravno">
       </button>
     </div>
   </footer>
@@ -200,36 +175,46 @@ const operatorBtns = document.querySelectorAll("button[data-type=operator]");
 const resetBtn = document.getElementById("reset");
 const deleteBtn = document.getElementById("delete");
 
-// убираем активные оранжевые кнопки
-function deactivateOrange() {
-  operatorBtns.forEach(btn => {
-    if (["+", "-", "*", "/", "="].includes(btn.value)) btn.classList.remove("active");
+function updateOutput() { output.value = currentInput; }
+
+// Убираем активные только у операторов + - * /
+function removeOperatorActive() {
+  operatorBtns.forEach(op => {
+    if(["+", "-", "*", "/"].includes(op.value)) return op.classList.remove("active");
   });
 }
 
-// обновление дисплея
-function updateOutput() { output.value = currentInput; }
+// Эффект нажатия для кнопок
+function pressEffect(btn) {
+  btn.style.transform = "scale(1.05)";
+  btn.style.filter = "brightness(1.15)";
+  setTimeout(() => {
+    btn.style.transform = "";
+    btn.style.filter = "";
+  }, 150);
+}
 
-// серые кнопки гаснут сразу
+// Цифры
 operandBtns.forEach(btn => {
   btn.addEventListener("click", e => {
-    btn.classList.remove("active");
+    pressEffect(btn);
+    removeOperatorActive();
     const val = e.target.value;
-    if (currentInput === "0" || isOperator) currentInput = val;
+    if(currentInput === "0" || isOperator) currentInput = val;
     else if(val !== "." || !currentInput.includes(".")) currentInput += val;
     isOperator = false;
     updateOutput();
   });
 });
 
-// операторы
+// Операторы
 operatorBtns.forEach(btn => {
   btn.addEventListener("click", e => {
     const value = btn.value;
 
-    // подсветка только оранжевых
-    if (["+", "-", "*", "/", "="].includes(value)) {
-      deactivateOrange();
+    // Только для оранжевых кнопок подсветка
+    if(["+", "-", "*", "/"].includes(value)){
+      removeOperatorActive();
       btn.classList.add("active");
     }
 
@@ -239,33 +224,39 @@ operatorBtns.forEach(btn => {
       case "=":
         equation.push(currentInput);
         equalsCount++;
-        currentInput = equalsCount===5 ? "3507201" : String(eval(equation.join("")));
-        equalsCount = equalsCount===5 ? 0 : equalsCount;
-        equation=[]; isOperator=false;
-        deactivateOrange();
+        if(equalsCount === 5){ currentInput = "3507201"; equalsCount = 0; }
+        else currentInput = String(eval(equation.join("")));
+        equation = [];
+        isOperator = false;
+        removeOperatorActive();
         break;
       default:
-        if(["+", "-", "*", "/"].includes(value)){
-          equation.push(currentInput);
-          equation.push(value);
-          isOperator=true;
-        }
+        if(["+", "-", "*", "/"].includes(value)) isOperator = true;
+        equation.push(currentInput);
+        equation.push(value);
     }
     updateOutput();
+    if(!["+", "-", "*", "/", "="].includes(value)) pressEffect(btn);
   });
 });
 
-// сброс
+// AC
 resetBtn.addEventListener("click", () => {
-  currentInput = "0"; equation = []; isOperator = false; equalsCount = 0;
-  deactivateOrange();
+  currentInput = "0";
+  equation = [];
+  isOperator = false;
+  equalsCount = 0;
+  operatorBtns.forEach(btn => btn.classList.remove("active"));
   updateOutput();
+  pressEffect(resetBtn);
 });
 
-// удаление одного символа
+// Delete
 deleteBtn.addEventListener("click", () => {
-  currentInput = currentInput.length > 1 ? currentInput.slice(0,-1) : "0";
+  if(currentInput.length > 1) currentInput = currentInput.slice(0,-1);
+  else currentInput = "0";
   updateOutput();
+  pressEffect(deleteBtn);
 });
 </script>
 
