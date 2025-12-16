@@ -4,7 +4,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>VirussCalc</title>
+<title>iPhone Style Calculator</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -111,6 +111,17 @@ button {
   transform: translateY(-2px);
 }
 
+.btn-grey:active,
+.btn-dark-grey:active {
+  transform: scale(1.10);
+  filter: brightness(1.15);
+}
+
+.btn-orange.active {
+  transform: scale(1.10);
+  filter: brightness(1.15);
+}
+
 .btn-dark-grey { background-color: #323232; }
 .btn-dark-grey:hover { background-color: #4d4d4d; }
 
@@ -203,9 +214,8 @@ function updateOutput() {
 // Цифры и точка
 operandBtns.forEach(btn => {
   btn.addEventListener("click", e => {
-    removeActive();
+    removeOperatorActive(); // не трогаем оператор
     const val = e.target.value;
-
     if (currentInput === "0" || isOperator) {
       currentInput = val;
       isOperator = false;
@@ -218,12 +228,24 @@ operandBtns.forEach(btn => {
   });
 });
 
+// Убираем подсветку у операторов
+function removeOperatorActive() {
+  operatorBtns.forEach(op => {
+    if (!["+", "-", "*", "/"].includes(op.value)) return;
+    op.classList.remove("active");
+  });
+}
+
 // Операторы
 operatorBtns.forEach(btn => {
   btn.addEventListener("click", e => {
-    removeActive();
-    e.currentTarget.classList.add("active");
-    const value = e.currentTarget.value
+    const value = e.currentTarget.value;
+
+    // для + - × ÷ подсветка
+    if (["+", "-", "*", "/"].includes(value)) {
+      operatorBtns.forEach(op => op.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+    }
 
     switch(value) {
       case "%":
@@ -236,13 +258,14 @@ operatorBtns.forEach(btn => {
         equation.push(currentInput);
         equalsCount++;
         if (equalsCount === 5) {
-          currentInput = "3507201"; // фишка на 5-е =
+          currentInput = "3507201";
           equalsCount = 0;
         } else {
           currentInput = String(eval(equation.join("")));
         }
         equation = [];
         isOperator = false;
+        operatorBtns.forEach(op => op.classList.remove("active"));
         break;
       default:
         equation.push(currentInput);
