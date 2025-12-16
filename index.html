@@ -98,12 +98,13 @@ button {
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-.btn[data-type="operator"][value="%"] {
-  font-size: 2.8rem; /* увеличиваем размер текста */
-}
-
-.btn:hover {
-  transform: translateY(-2px);
+/* Убираем hover-подсветку */
+.btn:hover,
+.btn-dark-grey:hover,
+.btn-grey:hover,
+.btn-orange:hover {
+  transform: none;
+  filter: none;
 }
 
 .btn-dark-grey:active,
@@ -118,13 +119,12 @@ button {
 }
 
 .btn-dark-grey { background-color: #323232; }
-.btn-dark-grey:hover { background-color: #4d4d4d; }
-
 .btn-grey { background-color: #5e5e5e; color: #FFFFFF; }
-.btn-grey:hover { background-color: #ededed; }
-
 .btn-orange { background-color: #ff9201; }
-.btn-orange:hover { background-color: orange; }
+
+.btn[data-type="operator"][value="%"] {
+  font-size: 2.8rem;
+}
 </style>
 </head>
 <body>
@@ -138,13 +138,13 @@ button {
     <!-- Верхний ряд -->
     <div class="btn_group">
       <button type="button" class="btn btn-grey btn-icon" id="delete">
-  <img src="delete.svg" alt="Delete">
-</button>
+        <img src="delete.svg" alt="Delete">
+      </button>
       <button type="button" class="btn btn-grey" id="reset">AC</button>
       <button type="button" class="btn btn-grey" data-type="operator" value="%">%</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="/">
-  <img src="divide.svg" alt="Divide">
-</button>
+        <img src="divide.svg" alt="Divide">
+      </button>
     </div>
 
     <div class="btn_group">
@@ -152,8 +152,8 @@ button {
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="8">8</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="9">9</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="*">
-  <img src="umnoz.svg" alt="umnoz">
-</button>
+        <img src="umnoz.svg" alt="multiply">
+      </button>
     </div>
 
     <div class="btn_group">
@@ -161,8 +161,8 @@ button {
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="5">5</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="6">6</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="-">
-  <img src="minus.svg" alt="minus">
-</button>
+        <img src="minus.svg" alt="minus">
+      </button>
     </div>
 
     <div class="btn_group">
@@ -170,20 +170,20 @@ button {
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="2">2</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="3">3</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="+">
-  <img src="plus.svg" alt="plus">
-</button>
+        <img src="plus.svg" alt="plus">
+      </button>
     </div>
 
     <!-- Нижний ряд -->
     <div class="btn_group">
       <button type="button" class="btn btn-dark-grey btn-icon" data-type="operator" value="invert">
-  <img src="plusminus.svg" alt="plusminus">
-</button>
+        <img src="plusminus.svg" alt="invert">
+      </button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value="0">0</button>
       <button type="button" class="btn btn-dark-grey" data-type="operand" value=".">,</button>
       <button type="button" class="btn btn-orange btn-icon" data-type="operator" value="=">
-  <img src="ravno.svg" alt="ravno">
-</button>
+        <img src="ravno.svg" alt="equals">
+      </button>
     </div>
   </footer>
 </main>
@@ -192,7 +192,7 @@ button {
 let currentInput = "0";
 let equation = [];
 let isOperator = false;
-let equalsCount = 0; // счётчик нажатий "="
+let equalsCount = 0;
 
 const output = document.getElementById("output");
 const operandBtns = document.querySelectorAll("button[data-type=operand]");
@@ -200,103 +200,71 @@ const operatorBtns = document.querySelectorAll("button[data-type=operator]");
 const resetBtn = document.getElementById("reset");
 const deleteBtn = document.getElementById("delete");
 
-const removeActive = () => operatorBtns.forEach(btn => btn.classList.remove("active"));
-
-function updateOutput() {
-  output.value = currentInput;
-}
-
-// Цифры и точка
-function removeOrangeActive() {
+// убираем активные оранжевые кнопки
+function deactivateOrange() {
   operatorBtns.forEach(btn => {
-    if (["+", "-", "*", "/", "="].includes(btn.value)) {
-      btn.classList.remove("active");
-    }
+    if (["+", "-", "*", "/", "="].includes(btn.value)) btn.classList.remove("active");
   });
 }
 
-// Цифры и точка
+// обновление дисплея
+function updateOutput() { output.value = currentInput; }
+
+// серые кнопки гаснут сразу
 operandBtns.forEach(btn => {
-  btn.addEventListener("touchstart", e => { // touchstart для мобильного
-    removeOrangeActive(); // цифры и серые кнопки сразу гаснут
-    // Делаем подсветку только при касании
-    btn.classList.add("active");
-  });
-
-  btn.addEventListener("touchend", e => {
-    // сразу убираем подсветку серых кнопок
-    btn.classList.remove("active");
-  });
-
   btn.addEventListener("click", e => {
+    btn.classList.remove("active");
     const val = e.target.value;
-    if (currentInput === "0" || isOperator) {
-      currentInput = val;
-      isOperator = false;
-    } else if (val === "." && currentInput.includes(".")) return;
-    else currentInput += val;
+    if (currentInput === "0" || isOperator) currentInput = val;
+    else if(val !== "." || !currentInput.includes(".")) currentInput += val;
+    isOperator = false;
     updateOutput();
   });
 });
 
-// Серые операторы (% и invert)
+// операторы
 operatorBtns.forEach(btn => {
-  btn.addEventListener("touchstart", e => {
-    const value = btn.value;
-    if (!["+", "-", "*", "/", "="].includes(value)) {
-      btn.classList.add("active"); // подсветка серых кнопок
-    }
-  });
-
-  btn.addEventListener("touchend", e => {
-    const value = btn.value;
-    if (!["+", "-", "*", "/", "="].includes(value)) {
-      btn.classList.remove("active"); // сразу гаснут
-    }
-  });
-
   btn.addEventListener("click", e => {
     const value = btn.value;
+
+    // подсветка только оранжевых
+    if (["+", "-", "*", "/", "="].includes(value)) {
+      deactivateOrange();
+      btn.classList.add("active");
+    }
+
     switch(value){
       case "%": currentInput = String(parseFloat(currentInput)/100); break;
       case "invert": currentInput = String(parseFloat(currentInput)*-1); break;
       case "=":
         equation.push(currentInput);
         equalsCount++;
-        if(equalsCount===5) currentInput="3507201", equalsCount=0;
-        else currentInput=String(eval(equation.join("")));
+        currentInput = equalsCount===5 ? "3507201" : String(eval(equation.join("")));
+        equalsCount = equalsCount===5 ? 0 : equalsCount;
         equation=[]; isOperator=false;
-        removeOrangeActive(); break;
+        deactivateOrange();
+        break;
       default:
         if(["+", "-", "*", "/"].includes(value)){
-          removeOrangeActive();
-          btn.classList.add("active");
+          equation.push(currentInput);
+          equation.push(value);
+          isOperator=true;
         }
-        equation.push(currentInput);
-        equation.push(value);
-        isOperator=true;
     }
     updateOutput();
   });
 });
 
-// Сброс
+// сброс
 resetBtn.addEventListener("click", () => {
-  currentInput = "0";
-  equation = [];
-  isOperator = false;
-  equalsCount = 0;
-  removeActive();
+  currentInput = "0"; equation = []; isOperator = false; equalsCount = 0;
+  deactivateOrange();
   updateOutput();
 });
 
-// Кнопка удаления одного символа
+// удаление одного символа
 deleteBtn.addEventListener("click", () => {
-  if (currentInput.length > 1) {
-    currentInput = currentInput.slice(0, -1);
-  } else {
-    currentInput = "0";
-  }
+  currentInput = currentInput.length > 1 ? currentInput.slice(0,-1) : "0";
   updateOutput();
 });
 </script>
