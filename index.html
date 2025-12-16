@@ -77,10 +77,10 @@ button {
 }
 
 .btn-icon img {
-  max-width: 48px;
-  max-height: 48px;
-  width: 48px;
-  height: 48px;
+  max-width: 46px;
+  max-height: 46px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
   display: block;
   pointer-events: none;
@@ -96,6 +96,11 @@ button {
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(1.05);   /* +5% */
+  filter: brightness(1.15); /* +15% яркости */
 }
 
 .btn:hover {
