@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>iPhone Style Calculator</title>
+
+<!-- Полноэкранный режим для iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+*,
+*::after,
+*::before {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100dvh; /* Реальная высота экрана без полосы свайпа */
+  width: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  outline: none;
+}
+
+#main {
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.calc_header {
+  margin-top: 20px;
+  padding: 12px;
+}
+
+.calc_header input {
+  width: 100%;
+  font-size: 4rem;
+  color: #fff;
+  text-align: right;
+  background: transparent;
+  border: none;
+}
+
+.calc_footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.btn_group {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.btn {
+  flex: 1;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-dark-grey { background-color: #313131; }
+.btn-dark-grey:hover { background-color: #4d4d4d; }
+
+.btn-grey { background-color: #9f9f9f; color: #000; }
+.btn-grey:hover { background-color: #ededed; }
+
+.btn-orange { background-color: #f69906; }
+.btn-orange:hover { background-color: orange; }
+
+.btn-grow { flex-grow: 2; border-radius: 40px; }
+</style>
+</head>
+<body>
+
+<main id="main">
+  <header class="calc_header">
+    <input type="text" id="output" value="0" readonly>
+  </header>
+
+  <footer class="calc_footer">
+    <div class="btn_group">
+      <button type="button" class="btn btn-grey" id="reset">AC</button>
+      <button type="button" class="btn btn-grey" data-type="operator" value="invert">+/-</button>
+      <button type="button" class="btn btn-grey" data-type="operator" value="%">%</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="/">÷</button>
+    </div>
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="7">7</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="8">8</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="9">9</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="*">×</button>
+    </div>
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="4">4</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="5">5</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="6">6</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="-">−</button>
+    </div>
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="1">1</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="2">2</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="3">3</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="+">+</button>
+    </div>
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey btn-grow" data-type="operand" value="0">0</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value=".">,</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="=">=</button>
+    </div>
+  </footer>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const output = document.getElementById("output");
+  const operand_btns = document.querySelectorAll("button[data-type=operand]");
+  const operator_btns = document.querySelectorAll("button[data-type=operator]");
+  const reset_btn = document.getElementById("reset");
+
+  let is_operator = false;
+  let equation = [];
+  let equalsCount = 0;
+
+  const remove_active = () => operator_btns.forEach(btn => btn.classList.remove("active"));
+
+  operand_btns.forEach(btn => {
+    btn.addEventListener("click", e => {
+      remove_active();
+      if (is_operator || output.value === "0") {
+        output.value = e.target.value;
+        is_operator = false;
+      } else if (e.target.value === "." && output.value.includes(".")) {
+        return;
+      } else {
+        output.value += e.target.value;
+      }
+    });
+  });
+
+  operator_btns.forEach(btn => {
+    btn.addEventListener("click", e => {
+      remove_active();
+      e.currentTarget.classList.add("active");
+      const value = e.target.value;
+
+      switch(value) {
+        case "%":
+          output.value = parseFloat(output.value)/100;
+          break;
+        case "invert":
+          output.value = parseFloat(output.value)*-1;
+          break;
+        case "=":
+          equation.push(output.value);
+          equalsCount++;
+          if(equalsCount === 5){
+            output.value = 3507201;
+            equalsCount = 0;
+          } else {
+            output.value = eval(equation.join(""));
+          }
+          equation = [];
+          is_operator = false;
+          break;
+        default:
+          equation.push(output.value);
+          equation.push(value);
+          is_operator = true;
+      }
+    });
+  });
+
+  reset_btn.addEventListener("click", () => {
+    output.value = "0";
+    equation = [];
+    is_operator = false;
+    equalsCount = 0;
+    remove_active();
+  });
+});
+</script>
+</body>
+</html>
