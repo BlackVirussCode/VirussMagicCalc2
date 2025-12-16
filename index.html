@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>iPhone Style Calculator</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+*,
+*::after,
+*::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+html, body {
+  height: 100dvh;
+  width: 100%;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  outline: none;
+}
+
+#main {
+  width: 100%;
+  max-width: 470px;
+  height: 95%;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem 1rem 2.7rem;
+}
+
+.calc_header {
+  margin-top: 10px;
+  padding: 8px;
+}
+
+.calc_header input {
+  width: 100%;
+  font-size: 4rem;
+  color: #fff;
+  text-align: right;
+  background: transparent;
+  border: none;
+  margin-bottom: 10px;
+}
+
+.calc_footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.btn_group {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.btn {
+  flex: 1;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  font-size: 2.2rem;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-dark-grey { background-color: #323232; }
+.btn-dark-grey:hover { background-color: #4d4d4d; }
+
+.btn-grey { background-color: #5e5e5e; color: #FFFFFF; }
+.btn-grey:hover { background-color: #ededed; }
+
+.btn-orange { background-color: #ff9201; }
+.btn-orange:hover { background-color: orange; }
+</style>
+</head>
+<body>
+
+<main id="main">
+  <header class="calc_header">
+    <input type="text" id="output" value="0" readonly>
+  </header>
+
+  <footer class="calc_footer">
+    <!-- Верхний ряд -->
+    <div class="btn_group">
+      <button type="button" class="btn btn-grey" id="delete">D</button>
+      <button type="button" class="btn btn-grey" id="reset">AC</button>
+      <button type="button" class="btn btn-grey" data-type="operator" value="%">%</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="/">÷</button>
+    </div>
+
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="7">7</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="8">8</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="9">9</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="*">×</button>
+    </div>
+
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="4">4</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="5">5</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="6">6</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="-">−</button>
+    </div>
+
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="1">1</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="2">2</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="3">3</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="+">+</button>
+    </div>
+
+    <!-- Нижний ряд -->
+    <div class="btn_group">
+      <button type="button" class="btn btn-dark-grey" data-type="operator" value="invert">+/-</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value="0">0</button>
+      <button type="button" class="btn btn-dark-grey" data-type="operand" value=".">,</button>
+      <button type="button" class="btn btn-orange" data-type="operator" value="=">=</button>
+    </div>
+  </footer>
+</main>
+
+<script>
+let currentInput = "0";
+let equation = [];
+let isOperator = false;
+let equalsCount = 0; // счётчик нажатий "="
+
+const output = document.getElementById("output");
+const operandBtns = document.querySelectorAll("button[data-type=operand]");
+const operatorBtns = document.querySelectorAll("button[data-type=operator]");
+const resetBtn = document.getElementById("reset");
+const deleteBtn = document.getElementById("delete");
+
+const removeActive = () => operatorBtns.forEach(btn => btn.classList.remove("active"));
+
+function updateOutput() {
+  output.value = currentInput;
+}
+
+// Цифры и точка
+operandBtns.forEach(btn => {
+  btn.addEventListener("click", e => {
+    removeActive();
+    const val = e.target.value;
+
+    if (currentInput === "0" || isOperator) {
+      currentInput = val;
+      isOperator = false;
+    } else if (val === "." && currentInput.includes(".")) {
+      return;
+    } else {
+      currentInput += val;
+    }
+    updateOutput();
+  });
+});
+
+// Операторы
+operatorBtns.forEach(btn => {
+  btn.addEventListener("click", e => {
+    removeActive();
+    e.currentTarget.classList.add("active");
+    const value = e.target.value;
+
+    switch(value) {
+      case "%":
+        currentInput = String(parseFloat(currentInput)/100);
+        break;
+      case "invert":
+        currentInput = String(parseFloat(currentInput)*-1);
+        break;
+      case "=":
+        equation.push(currentInput);
+        equalsCount++;
+        if (equalsCount === 5) {
+          currentInput = "3507201"; // фишка на 5-е =
+          equalsCount = 0;
+        } else {
+          currentInput = String(eval(equation.join("")));
+        }
+        equation = [];
+        isOperator = false;
+        break;
+      default:
+        equation.push(currentInput);
+        equation.push(value);
+        isOperator = true;
+    }
+    updateOutput();
+  });
+});
+
+// Сброс
+resetBtn.addEventListener("click", () => {
+  currentInput = "0";
+  equation = [];
+  isOperator = false;
+  equalsCount = 0;
+  removeActive();
+  updateOutput();
+});
+
+// Кнопка удаления одного символа
+deleteBtn.addEventListener("click", () => {
+  if (currentInput.length > 1) {
+    currentInput = currentInput.slice(0, -1);
+  } else {
+    currentInput = "0";
+  }
+  updateOutput();
+});
+</script>
+
+</body>
+</html>
