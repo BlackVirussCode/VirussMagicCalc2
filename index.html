@@ -207,65 +207,74 @@ function updateOutput() {
 }
 
 // Цифры и точка
-function removeOperatorActive() {
-  operatorBtns.forEach(op => {
-    if (!["+", "-", "*", "/"].includes(op.value)) return;
-    op.classList.remove("active");
+function removeOrangeActive() {
+  operatorBtns.forEach(btn => {
+    if (["+", "-", "*", "/", "="].includes(btn.value)) {
+      btn.classList.remove("active");
+    }
   });
 }
 
 // Цифры и точка
 operandBtns.forEach(btn => {
+  btn.addEventListener("touchstart", e => { // touchstart для мобильного
+    removeOrangeActive(); // цифры и серые кнопки сразу гаснут
+    // Делаем подсветку только при касании
+    btn.classList.add("active");
+  });
+
+  btn.addEventListener("touchend", e => {
+    // сразу убираем подсветку серых кнопок
+    btn.classList.remove("active");
+  });
+
   btn.addEventListener("click", e => {
-    removeOperatorActive(); // цифры не трогают активные операторы
     const val = e.target.value;
     if (currentInput === "0" || isOperator) {
       currentInput = val;
       isOperator = false;
-    } else if (val === "." && currentInput.includes(".")) {
-      return;
-    } else {
-      currentInput += val;
-    }
+    } else if (val === "." && currentInput.includes(".")) return;
+    else currentInput += val;
     updateOutput();
   });
 });
 
-// Операторы
+// Серые операторы (% и invert)
 operatorBtns.forEach(btn => {
-  btn.addEventListener("click", e => {
-    const value = e.currentTarget.value;
-
-    // для + - × ÷ подсветка
-    if (["+", "-", "*", "/"].includes(value)) {
-      removeOperatorActive();
-      e.currentTarget.classList.add("active");
+  btn.addEventListener("touchstart", e => {
+    const value = btn.value;
+    if (!["+", "-", "*", "/", "="].includes(value)) {
+      btn.classList.add("active"); // подсветка серых кнопок
     }
+  });
 
-    switch(value) {
-      case "%":
-        currentInput = String(parseFloat(currentInput)/100);
-        break;
-      case "invert":
-        currentInput = String(parseFloat(currentInput)*-1);
-        break;
+  btn.addEventListener("touchend", e => {
+    const value = btn.value;
+    if (!["+", "-", "*", "/", "="].includes(value)) {
+      btn.classList.remove("active"); // сразу гаснут
+    }
+  });
+
+  btn.addEventListener("click", e => {
+    const value = btn.value;
+    switch(value){
+      case "%": currentInput = String(parseFloat(currentInput)/100); break;
+      case "invert": currentInput = String(parseFloat(currentInput)*-1); break;
       case "=":
         equation.push(currentInput);
         equalsCount++;
-        if (equalsCount === 5) {
-          currentInput = "3507201";
-          equalsCount = 0;
-        } else {
-          currentInput = String(eval(equation.join("")));
-        }
-        equation = [];
-        isOperator = false;
-        removeOperatorActive();
-        break;
+        if(equalsCount===5) currentInput="3507201", equalsCount=0;
+        else currentInput=String(eval(equation.join("")));
+        equation=[]; isOperator=false;
+        removeOrangeActive(); break;
       default:
+        if(["+", "-", "*", "/"].includes(value)){
+          removeOrangeActive();
+          btn.classList.add("active");
+        }
         equation.push(currentInput);
         equation.push(value);
-        isOperator = true;
+        isOperator=true;
     }
     updateOutput();
   });
