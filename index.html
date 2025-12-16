@@ -98,11 +98,6 @@ button {
   transition: transform 0.15s ease, filter 0.15s ease;
 }
 
-.btn:active {
-  transform: scale(1.10);   /* +5% */
-  filter: brightness(1.15); /* +15% яркости */
-}
-
 .btn[data-type="operator"][value="%"] {
   font-size: 2.8rem; /* увеличиваем размер текста */
 }
@@ -111,14 +106,14 @@ button {
   transform: translateY(-2px);
 }
 
-.btn-grey:active,
-.btn-dark-grey:active {
-  transform: scale(1.10);
+.btn-dark-grey:active,
+.btn-grey:active {
+  transform: scale(1.05);
   filter: brightness(1.15);
 }
 
 .btn-orange.active {
-  transform: scale(1.10);
+  transform: scale(1.05);
   filter: brightness(1.15);
 }
 
@@ -212,9 +207,17 @@ function updateOutput() {
 }
 
 // Цифры и точка
+function removeOperatorActive() {
+  operatorBtns.forEach(op => {
+    if (!["+", "-", "*", "/"].includes(op.value)) return;
+    op.classList.remove("active");
+  });
+}
+
+// Цифры и точка
 operandBtns.forEach(btn => {
   btn.addEventListener("click", e => {
-    removeOperatorActive(); // не трогаем оператор
+    removeOperatorActive(); // цифры не трогают активные операторы
     const val = e.target.value;
     if (currentInput === "0" || isOperator) {
       currentInput = val;
@@ -228,14 +231,6 @@ operandBtns.forEach(btn => {
   });
 });
 
-// Убираем подсветку у операторов
-function removeOperatorActive() {
-  operatorBtns.forEach(op => {
-    if (!["+", "-", "*", "/"].includes(op.value)) return;
-    op.classList.remove("active");
-  });
-}
-
 // Операторы
 operatorBtns.forEach(btn => {
   btn.addEventListener("click", e => {
@@ -243,7 +238,7 @@ operatorBtns.forEach(btn => {
 
     // для + - × ÷ подсветка
     if (["+", "-", "*", "/"].includes(value)) {
-      operatorBtns.forEach(op => op.classList.remove("active"));
+      removeOperatorActive();
       e.currentTarget.classList.add("active");
     }
 
@@ -265,7 +260,7 @@ operatorBtns.forEach(btn => {
         }
         equation = [];
         isOperator = false;
-        operatorBtns.forEach(op => op.classList.remove("active"));
+        removeOperatorActive();
         break;
       default:
         equation.push(currentInput);
